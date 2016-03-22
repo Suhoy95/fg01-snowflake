@@ -38,6 +38,7 @@ app.controller("mainController", ["$scope", function($scope){
             var curve = _(KochCurve($scope.stepsCount)),
                 p1 = curve.map(t);
 
+            console.log(curve);
 
             ctx.clearRect(0, 0, ctx.width, ctx.height);
 
@@ -100,13 +101,14 @@ function transformation2(from, to)
 
 function KochCurve(generation, p1, p2)
 {
-    var points = [p1 || {x: 0, y: 0}, p2 || {x:1, y:0}];
+    var points = [p1 || new Point(), p2 || new Point(1, 0)];
 
-    return calcCurve(points, generation)
+    return calcCurve(points, generation);
 }
 
 function calcCurve(points, generation)
 {
+    console.log(generation);
     if(generation <= 0)
         return points;
 
@@ -115,46 +117,53 @@ function calcCurve(points, generation)
     {
         var a = points[i],
             b = points[i + 1],
-            v = vector(a, b),
-            o = orthogonal(v);
+            v = a.vectorTo(b),
+            o = v.orthoL();
         next.push(a);
-        next.push({x: a.x + v.x / 3, y: a.y + v.y /3 });
-        next.push({x: a.x + v.x/2 + o.x*0.866/3, y: a.y + v.y/2 + o.y*0.866/3});
-        next.push({x: a.x + v.x * 2/3, y: a.y + v.y * 2/3 });
+        next.push( a.plus( v.multy(1/3.0)) );
+        next.push( a.plus( v.multy(1/2.0)).plus( o.multy(0.866/3)) );
+        next.push( a.plus( v.multy(2/3.0)) );
     }
     next.push(points[points.length - 1]);
 
+    console.log(next);
     return calcCurve(next, generation - 1);
 }
 
-function vector(from, to)
-{
-    return {
-        x: to.x - from.x, 
-        y: to.y - from.y
-    };
-}
+(function (window){
+    function Point(x, y){
+        this.x = x || 0;
+        this.y = y || 0;
+    }
 
-function normalize(p)
-{
-    return {
-        x: p.x / Math.sqrt(p.x*p.x + p.y*p.y),
-        y: p.y / Math.sqrt(p.x*p.x + p.y*p.y)
+    Point.prototype.norm = function() {
+        var p = this;
+        return new Point( p.x / Math.sqrt(p.x*p.x + p.y*p.y),
+                          p.y / Math.sqrt(p.x*p.x + p.y*p.y) );
     };
-}
 
-function orthogonal(p)
-{
-    return {
-        x: -p.y,
-        y: p.x
+    Point.prototype.vectorTo = function(to) {
+        var from = this;
+        return new Point( to.x - from.x, 
+                          to.y - from.y);
     };
-}
 
-function multiply(p, c)
-{
-    return {
-        x: p.x * c,
-        y: p.y * c
+    Point.prototype.orthoL = function() {
+        return new Point(-this.y, this.x);
     };
-}
+
+    Point.prototype.orthoR = function() {
+        return new Point(this.y, -this.x);
+    };
+
+    Point.prototype.plus = function(b) {
+        var a = this;
+        return new Point(a.x + b.x, a.y + b.y);
+    };
+
+    Point.prototype.multy = function(c) {
+        return new Point(this.x * c, this.y * c);
+    };
+
+    window.Point = Point;
+})(window);
