@@ -11,93 +11,79 @@ app.directive("drawing", function($timeout){
         ctx.width = attr["width"];
         ctx.height = attr["height"];
 
-
-        var obj = scope[attr["drawing"]];
-        if(!obj || !obj.draw)
-            throw new Error("Drawing: object undefined");
-        
-        obj.draw(ctx);
+        ctx.transform(1, 0, 0, -1, ctx.width / 2, ctx.height / 2);
+        scope.draw(ctx);
     }
   };
 });
 
 
 app.controller("mainController", ["$scope", function($scope){
-
+    $scope.clearCanvas = true;
     $scope.stepsCount = 1;
-    $scope.fractal = {
-        draw: function(context){
-            var ctx = this.ctx =  context || this.ctx;
+    $scope.n = 3;
+    $scope.fi = Math.PI / 6;
+    $scope.maxFi = maxFi(3)
+    $scope.r = 200;
+    $scope.maxR = maxR(3);
+    $scope.curvePoints = KochCurve($scope.stepsCount);
 
-            var t = transformation2({
-                            x:{min: 0, max: 1}, y: {min: 0, max: 1}
-                        }, {
-                            x:{min: 0, max: ctx.width /2}, y: {min: 0, max: ctx.width / 2}
-                        });
-
-            var curve = _(KochCurve($scope.stepsCount)),
-                p1 = curve.map(t);
-
-            console.log(curve);
-
-            ctx.clearRect(0, 0, ctx.width, ctx.height);
-
-            ctx.beginPath();
-            ctx.translate(ctx.width/4, ctx.height * 0.3);
-            ctx.scale(1, -1);
-            drawCurve(p1);
-
-            ctx.rotate(-Math.PI/3);
-            ctx.scale(1, -1);
-            drawCurve(p1);
-
-            ctx.rotate(-Math.PI/3);
-            ctx.translate(ctx.width / 2, 0);
-            ctx.scale(1, -1);
-            ctx.rotate(-Math.PI*2/3);
-            drawCurve(p1);
-
-            ctx.setTransform(1, 0, 0, 1, 0, 0);
-            function drawCurve(points)
-            {
-                var p0 = points[0];
-                ctx.moveTo(p0.x, p0.y);
-                for(var i = 1; i < points.length; i++)
-                    ctx.lineTo(points[i].x, points[i].y);
-
-                ctx.stroke(); 
-            }
-        }
+    $scope.update = function(){
+        this.maxFi = maxFi(this.n);
+        this.fi = Math.min(this.fi, this.maxFi);
+        this.maxR = maxR(this.n);
+        this.r = Math.min(this.r, this.maxR);
+        this.draw();
     }
-}]);
 
-function transformation(from, to)
-{
-    var transform = function(x){
-        var from = transform.from;
-        var to = transform.to;
-        return (x - from.min)/(from.max - from.min) * (to.max - to.min) + to.min;
+    $scope.recalc = function(){
+        this.curvePoints = KochCurve($scope.stepsCount);
+        this.update();
+    }
+
+    function maxFi(n){
+        return 2*Math.PI / n;
+    }
+
+    function maxR(n){
+        return 200 + 2.0 / 3 * 200 * Math.sin(Math.PI / n) * Math.sin(Math.PI / 3);
     }
     
-    transform.from = from;
-    transform.to = to;
+    $scope.draw = function(context){
+        var ctx = this.ctx = context || this.ctx;
+        var points = this.curvePoints;
+        if(this.clearCanvas)
+            ctx.clearRect(-ctx.width/2, -ctx.height/2, ctx.width, ctx.height);
+    
+        for(var i = 0; i < this.n; i++){
+            ctx.save();
+            var a = new Point(this.r * Math.cos(this.fi + i * 2*Math.PI/this.n),
+                              this.r * Math.sin(this.fi + i * 2*Math.PI/this.n) );
 
-    return transform;
-}
+            var b = new Point(this.r * Math.cos(this.fi + ((i + 1) % this.n) * 2*Math.PI/this.n),
+                              this.r * Math.sin(this.fi + ((i + 1) % this.n) * 2*Math.PI/this.n) );
+            var ox = a.vectorTo(b),
+                oy = ox.orthoR();
+            ctx.transform(ox.x, ox.y, oy.x, oy.y, a.x, a.y);
 
-function transformation2(from, to)
-{
-    var transformX = transformation(from.x, to.x);
-    var transformY = transformation(from.y, to.y);
+            ctx.beginPath();
+            ctx.lineWidth = 1.0 / ox.length();
+            drawCurve();
+            ctx.restore();
+        }
 
-    return function(p){
-        return {
-            x: transformX(p.x),
-            y: transformY(p.y)
-        };
-    };
-}
+        function drawCurve(){
+            ctx.beginPath();
+            
+            for(var i = 0; i < points.length; i++)
+                ctx.lineTo(points[i].x, points[i].y);
 
+            ctx.stroke(); 
+        }
+    }
+
+
+}]);
 
 function KochCurve(generation, p1, p2)
 {
@@ -108,7 +94,6 @@ function KochCurve(generation, p1, p2)
 
 function calcCurve(points, generation)
 {
-    console.log(generation);
     if(generation <= 0)
         return points;
 
@@ -126,7 +111,6 @@ function calcCurve(points, generation)
     }
     next.push(points[points.length - 1]);
 
-    console.log(next);
     return calcCurve(next, generation - 1);
 }
 
@@ -136,10 +120,13 @@ function calcCurve(points, generation)
         this.y = y || 0;
     }
 
+    Point.prototype.length = function() {
+        return Math.sqrt(this.x*this.x + this.y*this.y);
+    };
+
     Point.prototype.norm = function() {
-        var p = this;
-        return new Point( p.x / Math.sqrt(p.x*p.x + p.y*p.y),
-                          p.y / Math.sqrt(p.x*p.x + p.y*p.y) );
+        return new Point( this.x / this.length(),
+                          this.y / this.length() );
     };
 
     Point.prototype.vectorTo = function(to) {

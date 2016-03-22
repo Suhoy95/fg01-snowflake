@@ -30,18 +30,23 @@
                     <p><div class="input-group">
                         <span class="input-group-addon">Количество сторон:</span>
                         <span class="input-group-addon" ng-bind="n"></span>
-                        <input type="range" min="2" max="8" class="form-control" ng-model="n" ng-change="update()">
+                        <input type="range" min="2" max="10" class="form-control" ng-model="n" ng-change="update()">
                     </div></p>
                     <p><div class="input-group">
                         <span class="input-group-addon">Угол поворота</span>
-                        <span class="input-group-addon" ng-bind="fi"></span>
-                        <input type="range" min="0" max="maxFi" class="form-control" ng-model="fi" ng-change="update()">
+                        <span class="input-group-addon" ng-bind="fi | number : 2"></span>
+                        <input type="range" min="0" max="{{maxFi}}" step="0.01" class="form-control" ng-model="fi" ng-change="update()">
                     </div></p>
                     <p><div class="input-group">
                         <span class="input-group-addon">Радиус окружности</span>
-                        <span class="input-group-addon" ng-bind="r"></span>
-                        <input type="range" min="0" max="maxR" class="form-control" ng-model="r" ng-change="update()">
+                        <span class="input-group-addon" ng-bind="r | number : 1"></span>
+                        <input type="range" min="0" max="{{maxR}}" step="1" class="form-control" ng-model="r" ng-change="update()">
                     </div></p>
+                    <p align="center">
+                        <label>
+                            <input type="checkbox" ng-model="clearCanvas"> Очищать лист при перерисовке
+                        </label>
+                    </p>
                 </div>
 
                 <div class="thumbnail">
@@ -51,7 +56,7 @@
                         <input type="range" min="0" max="8" class="form-control" ng-model="stepsCount">
                     </div></p> 
                     <p> 
-                        <button class="btn btn-default" ng-click="fractal.draw()">Построить</button>
+                        <button class="btn btn-default" ng-click="recalc()">Построить</button>
                     </p>
                 </div>
             </div>
