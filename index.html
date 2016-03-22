@@ -26,13 +26,34 @@
             </div>
 
             <div class="col-md-4">
-                <div class="input-group">
-                    <span class="input-group-addon">Количестов поколений:</span>
-                    <span class="input-group-addon" ng-bind="stepsCount"></span>
-                    <input type="range" min="0" max="8" class="form-control" ng-model="stepsCount">
+                <div class="thumbnail">
+                    <p><div class="input-group">
+                        <span class="input-group-addon">Количество сторон:</span>
+                        <span class="input-group-addon" ng-bind="n"></span>
+                        <input type="range" min="2" max="8" class="form-control" ng-model="n" ng-change="update()">
+                    </div></p>
+                    <p><div class="input-group">
+                        <span class="input-group-addon">Угол поворота</span>
+                        <span class="input-group-addon" ng-bind="fi"></span>
+                        <input type="range" min="0" max="maxFi" class="form-control" ng-model="fi" ng-change="update()">
+                    </div></p>
+                    <p><div class="input-group">
+                        <span class="input-group-addon">Радиус окружности</span>
+                        <span class="input-group-addon" ng-bind="r"></span>
+                        <input type="range" min="0" max="maxR" class="form-control" ng-model="r" ng-change="update()">
+                    </div></p>
                 </div>
-                <br>
-                    <button class="btn btn-default" ng-click="fractal.draw()">Построить</button>
+
+                <div class="thumbnail">
+                    <p><div class="input-group">
+                        <span class="input-group-addon">Количестов поколений:</span>
+                        <span class="input-group-addon" ng-bind="stepsCount"></span>
+                        <input type="range" min="0" max="8" class="form-control" ng-model="stepsCount">
+                    </div></p> 
+                    <p> 
+                        <button class="btn btn-default" ng-click="fractal.draw()">Построить</button>
+                    </p>
+                </div>
             </div>
         </div>
 
