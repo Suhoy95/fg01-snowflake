@@ -46,7 +46,7 @@ app.controller("mainController", ["$scope", function($scope){
     }
 
     function maxR(n){
-        return 200 + 2.0 / 3 * 200 * Math.sin(Math.PI / n) * Math.sin(Math.PI / 3);
+        return 300 / (Math.cos(Math.PI / n) + 2.0 / 3  * Math.sin(Math.PI / n) * Math.sin(Math.PI / 3));
     }
     
     $scope.draw = function(context){
